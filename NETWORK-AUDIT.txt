@@ -1,0 +1,39 @@
+UH Parrot network audit — 2026-10-29T22:58:16.747Z
+Scenario: page load, model load, one transcription, then deliberate attempts to reach example.com
+
+Requests made (28):
+  <site>/index.html
+  <site>/netguard.js
+  <site>/logo.png
+  <site>/terms/terms_01_procedures.js
+  <site>/terms/terms_02_anatomy.js
+  <site>/terms/terms_03_equipment.js
+  <site>/terms/terms_04_diagnoses.js
+  <site>/terms/terms_05_emergency.js
+  <site>/terms/terms_06_specialties.js
+  <site>/terms/terms_07_medicine.js
+  <site>/prompt.js
+  <site>/english_exclusions.js
+  <site>/phonetic.js
+  <site>/textengine.js
+  <site>/app.js
+  <site>/model/whisper-small.en/config.json
+  <site>/worker.js
+  <site>/lib/transformers.min.js
+  <site>/engine.js
+  <site>/model/whisper-base.en/preprocessor_config.json
+  <site>/model/whisper-base.en/tokenizer_config.json
+  <site>/model/whisper-base.en/config.json
+  <site>/model/whisper-base.en/tokenizer.json
+  <site>/model/whisper-base.en/onnx/encoder_model_quantized.onnx
+  <site>/model/whisper-base.en/onnx/decoder_model_merged_quantized.onnx
+  <site>/model/whisper-base.en/generation_config.json
+  <site>/lib/ort-wasm-simd-threaded.asyncify.mjs
+  <site>/lib/ort-wasm-simd-threaded.asyncify.wasm
+
+Requests to any other host: 0
+
+Deliberate outbound attempts:
+  fetch blocked: UH Parrot blocked an outbound fetch to https://example.com/ (only same-origin re
+  xhr blocked
+  websocket blocked

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Network lockdown: the browser is only allowed to talk to this site's own origin. No external
+     scripts, no external connections, no external images or fonts. WebAssembly is permitted for the
+     speech engine. Any attempt to reach another host is blocked by Chrome and logged in DevTools. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>UH Parrot</title>
+<script src="netguard.js"></script>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1f4e9c">
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#1a1f2b;--muted:#5d6676;--line:#dde3ea;--blue:#005eb8;--blue2:#0a4a8c;--red:#c62828;--green:#2e7d32;--amber:#b26a00}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font:15px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--blue);color:#fff}
+  header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px}
+  header .sub{font-size:12px;opacity:.85}
+  header .spacer{flex:1}
+  header button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px}
+  header button:hover{background:rgba(255,255,255,.25)}
+  .logo{height:44px;width:auto;display:block;background:#fff;border-radius:8px;padding:3px}
+  main{flex:1;display:flex;flex-direction:column;max-width:1100px;width:100%;margin:0 auto;padding:12px 16px 16px;gap:10px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .bar .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button.big{display:flex;align-items:center;gap:10px;background:var(--blue);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:17px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  button.big:disabled{background:#9aa6b5;cursor:not-allowed}
+  button.big .dot{width:14px;height:14px;border-radius:50%;background:#fff}
+  button.big.recording{background:var(--red);animation:pulse 1.4s infinite}
+  button.big.recording .dot{background:#fff}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(198,40,40,.5)}70%{box-shadow:0 0 0 14px rgba(198,40,40,0)}100%{box-shadow:0 0 0 0 rgba(198,40,40,0)}}
+  .status{font-size:14px;color:var(--muted);min-height:20px}
+  .status.live{color:var(--red);font-weight:600}
+  .status.ready{color:var(--green)}
+  .status.error{color:var(--red)}
+  .status.loading{color:var(--amber)}
+  .meter{width:120px;height:8px;background:#e3e8ee;border-radius:4px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0;background:var(--green);transition:width .08s}
+  select,button.sm{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:14px;cursor:pointer}
+  button.sm:hover{background:#eef3f9}
+  button.sm.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+  button.sm.primary:hover{background:var(--blue2)}
+  textarea#note{flex:1;width:100%;min-height:320px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font:16px/1.55 Consolas,"Courier New",monospace;background:var(--card);color:var(--ink);outline:none}
+  textarea#note:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,94,184,.12)}
+  body.bigfont textarea#note{font-size:20px}
+  .foot{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .progress{display:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .progress.show{display:block}
+  .progress .track{height:8px;background:#e3e8ee;border-radius:4px;overflow:hidden;margin-top:6px}
+  .progress .track i{display:block;height:100%;width:0;background:var(--blue);transition:width .2s}
+  .panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .panel.open{display:block}
+  .panel h2{margin:0 0 10px;font-size:16px}
+  .panel .row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:10px}
+  .panel label{font-size:14px;display:flex;align-items:center;gap:6px}
+  .panel textarea{width:100%;min-height:120px;font:13px/1.4 Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px}
+  .panel small{color:var(--muted)}
+  .help table{border-collapse:collapse;width:100%;font-size:14px}
+  .help td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .help td:first-child{font-weight:600;white-space:nowrap;width:220px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1a1f2b;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:all .25s;pointer-events:none;max-width:90vw;font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .queue{font-size:13px;color:var(--amber)}
+  @media (max-width:640px){header h1{font-size:16px}.bar .right{margin-left:0}textarea#note{min-height:240px}}
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="logo.png" alt="UH Parrot">
+  <div><h1>UH Parrot</h1><div class="sub">Offline medical dictation · nothing leaves this computer · feedback: Matthew.Burstein@uhhospitals.org</div></div>
+  <div class="spacer"></div>
+  <button id="helpBtn" title="Voice commands and help">Help</button>
+  <button id="settingsBtn" title="Settings and vocabulary">Settings</button>
+</header>
+
+<main>
+  <div class="progress" id="progress">
+    <div id="progressText">Loading speech model…</div>
+    <div class="track"><i id="progressBar"></i></div>
+  </div>
+
+  <div class="bar">
+    <button class="big" id="recBtn" disabled><span class="dot"></span><span class="label">Record</span></button>
+    <div class="meter" title="Microphone level"><i id="level"></i></div>
+    <div class="status" id="status">Starting…</div>
+    <div class="queue" id="queue"></div>
+    <div class="right">
+      <button class="sm" id="undoBtn" title="Undo last dictation (or say 'scratch that')">Undo</button>
+      <button class="sm" id="clearBtn">Clear</button>
+      <button class="sm primary" id="copyBtn" title="Copy the whole note (Ctrl+Shift+C)">Copy note</button>
+    </div>
+  </div>
+
+  <textarea id="note" placeholder="Press Record (or F2) and start dictating. Say &quot;period&quot;, &quot;comma&quot;, &quot;new paragraph&quot;, or &quot;scratch that&quot;. Click anywhere in the text to dictate at that spot. When done, press Copy note and paste into Epic." spellcheck="true"></textarea>
+
+  <div class="foot">
+    <span id="wordCount">0 words</span>
+    <span id="vocabCount"></span>
+    <span id="engineInfo"></span>
+    <span>Bugs or feature requests: <a href="mailto:Matthew.Burstein@uhhospitals.org?subject=UH%20Parrot%20feedback" style="color:var(--blue)">Matthew.Burstein@uhhospitals.org</a></span>
+    <span style="margin-left:auto"><button class="sm" id="fontBtn" style="padding:2px 8px;font-size:12px">Larger text</button> <button class="sm" id="downloadBtn" style="padding:2px 8px;font-size:12px">Save as .txt</button></span>
+  </div>
+
+  <section class="panel" id="settings">
+    <h2>Settings</h2>
+    <div class="row">
+      <label>Speech model
+        <select id="modelSel">
+          <option value="whisper-base.en">Base (fast, default)</option>
+          <option value="whisper-small.en">Small (more accurate, slower)</option>
+        </select>
+      </label>
+      <label>Microphone <select id="micSel"></select></label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="fuzzyChk"> Extra-aggressive spelling correction (phonetic matching is always on; this adds one-letter typo snapping)</label>
+      <label><input type="checkbox" id="autoCopyChk"> Copy note to clipboard automatically when I stop recording</label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="keepAudioChk"> Keep my recordings in this tab for engine tuning (nothing is sent anywhere)</label>
+      <button class="sm" id="downloadAudioBtn">Download recordings (0)</button>
+      <button class="sm" id="clearAllBtn" title="Erase the note and all kept recordings in this tab">Clear note + recordings</button>
+      <small>Dictate with this on, then download the zip and send it to Matthew. The count is <b>segments, not dictations</b>: the recorder cuts your speech at every pause of about a second (or at 25 seconds) and transcribes each piece as you go, so one note is usually 5 to 10 segments. The zip contains the audio of each segment and what the engine wrote for it. Do not include patient names or identifiers.</small>
+    </div>
+    <h2 style="margin-top:14px">My vocabulary</h2>
+    <small>One per line. Format: <code>what Whisper hears = What it should write</code>, for example <code>parma partners = Parma partners</code>.</small>
+    <textarea id="vocabBox" placeholder="misheard phrase = Correct Term"></textarea>
+    <div class="row" style="margin-top:8px"><button class="sm primary" id="saveVocabBtn">Save vocabulary</button> <button class="sm" id="exportVocabBtn">Export to file</button> <button class="sm" id="importVocabBtn">Import from file</button><input type="file" id="importVocabFile" accept=".txt" style="display:none"></div>
+    <small><strong>Where this is saved:</strong> in this browser on this computer only. It survives closing the tab, but it does not follow you to another workstation and shared PCs may clear it at logoff. Terms you add here are also whispered to the speech engine before each sentence, so it learns to hear them. Export a copy to keep it, and email new terms to <a href="mailto:Matthew.Burstein@uhhospitals.org?subject=UH%20Parrot%20vocabulary">Matthew.Burstein@uhhospitals.org</a> so they go into the shared dictionary for everyone. No patient data belongs here.</small>
+  </section>
+
+  <section class="panel help" id="help">
+    <h2>Voice commands</h2>
+    <table>
+      <tr><td>period, comma, colon, semicolon, question mark</td><td>Punctuation</td></tr>
+      <tr><td>new paragraph / new line</td><td>Paragraph or line break</td></tr>
+      <tr><td>open paren / close paren, hyphen, slash</td><td>Symbols</td></tr>
+      <tr><td>scratch that</td><td>Removes the last thing you dictated</td></tr>
+      <tr><td>delete last word / delete last sentence</td><td>Edits at the cursor</td></tr>
+      <tr><td>cap that / all caps that</td><td>Capitalizes the last dictation</td></tr>
+      <tr><td>copy note</td><td>Copies everything to the clipboard</td></tr>
+      <tr><td>stop dictation</td><td>Stops recording</td></tr>
+    </table>
+    <h2 style="margin-top:14px">Tips</h2>
+    <ul style="margin:0;padding-left:20px;font-size:14px">
+      <li>Suture sizes format automatically: "three oh Vicryl" becomes 3-0 Vicryl, "number one PDS" becomes #1 PDS.</li>
+      <li>Speak in phrases and pause briefly; each pause is transcribed as a unit. Text appears a second or two behind you.</li>
+      <li>Click anywhere in the note to move the cursor, then dictate; text inserts at the cursor.</li>
+      <li>F2 starts and stops recording. Ctrl+Shift+C copies the note. Ctrl+Z works in the text box.</li>
+      <li>The note stays in this browser tab until you clear it, even if you refresh. Clear it when you're done.</li>
+      <li>Add your own terms under Settings → My vocabulary.</li>
+      <li>Bugs, misheard terms, or feature requests: email Matthew Burstein at Matthew.Burstein@uhhospitals.org.</li>
+    </ul>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="terms/terms_01_procedures.js"></script>
+<script src="terms/terms_02_anatomy.js"></script>
+<script src="terms/terms_03_equipment.js"></script>
+<script src="terms/terms_04_diagnoses.js"></script>
+<script src="terms/terms_05_emergency.js"></script>
+<script src="terms/terms_06_specialties.js"></script>
+<script src="terms/terms_07_medicine.js"></script>
+<script src="prompt.js"></script>
+<script src="english_exclusions.js"></script>
+<script src="phonetic.js"></script>
+<script src="textengine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
