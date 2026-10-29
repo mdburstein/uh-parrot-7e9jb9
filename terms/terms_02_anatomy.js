@@ -521,7 +521,7 @@ manubrium|manubrium|man ubrium
 clavicle|clavicle
 subclavian vein|sub clavian vein|subclavian vein
 subclavian artery|sub clavian artery
-internal jugular vein|internal jugular vein|ij vein
+internal jugular vein|internal jugular vein
 IJ|i j|eye jay
 internal jugular|internal jugular
 external jugular vein|external jugular vein

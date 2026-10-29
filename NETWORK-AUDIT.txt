@@ -1,4 +1,4 @@
-UH Parrot network audit — 2026-10-29T22:58:16.747Z
+UH Parrot network audit — 2026-10-29T23:51:47.221Z
 Scenario: page load, model load, one transcription, then deliberate attempts to reach example.com
 
 Requests made (28):

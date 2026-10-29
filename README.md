@@ -17,7 +17,7 @@ from this site.
 | `worker.js`, `engine.js` | Web Worker that runs the speech model off the UI thread | 5 KB |
 | `lib/transformers.min.js` | Transformers.js v3 (Hugging Face), Apache-2.0 | 0.6 MB |
 | `lib/ort-wasm-simd-threaded.asyncify.{mjs,wasm}` | ONNX Runtime Web (Microsoft), MIT | 27 MB |
-| `model/whisper-base.en/` | OpenAI Whisper base.en (MIT), fine-tuned by UH on about 7,000 surgical dictation clips (real op-note sentences in 20 synthetic voices plus about 25 minutes of surgeon dictation), int8 ONNX. Same architecture and runtime as v1. | 105 MB |
+| `model/whisper-base.en/` | OpenAI Whisper base.en (MIT), fine-tuned by UH on about 8,000 surgical dictation clips (real op-note sentences in 20 synthetic voices plus about 25 minutes of surgeon dictation), int8 ONNX. Same architecture and runtime as v1. | 105 MB |
 | `SHA256SUMS.txt` | Checksums of every file | |
 | `NETWORK-AUDIT.txt` | Log of every network request made during a full load-and-transcribe run in headless Chrome | |
 
@@ -73,7 +73,7 @@ sha256sum -c SHA256SUMS.txt
 ## Version history
 
 * **v2 (2026-10-29 evening)**: speech model fine-tuned on surgical dictation (on a held-out op note dictated by a
-  surgeon: word error rate 20.6% → 12.9%, long medical words recognized 77% → 89%, before the vocabulary layer).
+  surgeon: word error rate 20.6% → 11.7%, long medical words recognized 77% → 92%, before the vocabulary layer).
   Fixed a recorder bug that could stop hearing after 2 to 3 minutes of continuous dictation (noise-floor runaway).
   Added: optional "keep my recordings" with zip download for engine tuning, clear-all button, repetition-loop
   guard, about 60 new spoken variants from real dictation, new icon. The optional small.en model was dropped (v2
