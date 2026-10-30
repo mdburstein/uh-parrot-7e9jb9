@@ -20,7 +20,10 @@
   body{margin:0;font:15px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
   header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--blue);color:#fff}
   header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px}
-  header .sub{font-size:12px;opacity:.85}
+  header .sub{font-size:12px;opacity:.85;overflow-wrap:anywhere}
+  header .title{min-width:0;flex:1 1 auto}
+  header .btns{display:flex;gap:8px;flex:0 0 auto}
+  @media (max-width:600px){header{flex-wrap:wrap;padding:8px 12px}header .title{flex:1 1 60%}header .sub{font-size:11px}header .btns{margin-left:auto}}
   header .spacer{flex:1}
   header button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px}
   header button:hover{background:rgba(255,255,255,.25)}
@@ -51,6 +54,8 @@
   .foot{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
   .progress{display:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
   .progress.show{display:block}
+  #progressText{min-height:2.6em;line-height:1.3em;overflow:hidden}
+  #progressText .pct{display:inline-block;min-width:3.2em;text-align:right;font-variant-numeric:tabular-nums}
   .progress .track{height:8px;background:#e3e8ee;border-radius:4px;overflow:hidden;margin-top:6px}
   .progress .track i{display:block;height:100%;width:0;background:var(--blue);transition:width .2s}
   .panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
@@ -60,9 +65,12 @@
   .panel label{font-size:14px;display:flex;align-items:center;gap:6px}
   .panel textarea{width:100%;min-height:120px;font:13px/1.4 Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px}
   .panel small{color:var(--muted)}
-  .help table{border-collapse:collapse;width:100%;font-size:14px}
-  .help td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-  .help td:first-child{font-weight:600;white-space:nowrap;width:220px}
+  .help table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;font-size:14px}
+  .help td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+  .help td:first-child{font-weight:600;width:45%}
+  .panel{max-width:100%;overflow-wrap:anywhere;box-sizing:border-box}
+  body{overflow-x:hidden}
+  @media (max-width:600px){.help td{padding:6px 4px;font-size:13px}.help td:first-child{width:48%}}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1a1f2b;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:all .25s;pointer-events:none;max-width:90vw;font-size:14px}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .queue{font-size:13px;color:var(--amber)}
@@ -72,15 +80,14 @@
 <body>
 <header>
   <img class="logo" src="logo.png" alt="UH Parrot">
-  <div><h1>UH Parrot</h1><div class="sub">Offline medical dictation · nothing leaves this computer · feedback: Matthew.Burstein@uhhospitals.org</div></div>
-  <div class="spacer"></div>
-  <button id="helpBtn" title="Voice commands and help">Help</button>
-  <button id="settingsBtn" title="Settings and vocabulary">Settings</button>
+  <div class="title"><h1>UH Parrot</h1><div class="sub">Offline medical dictation · nothing leaves this computer · feedback: Matthew.Burstein@uhhospitals.org</div></div>
+  <div class="btns"><button id="helpBtn" title="Voice commands and help">Help</button>
+  <button id="settingsBtn" title="Settings and vocabulary">Settings</button></div>
 </header>
 
 <main>
   <div class="progress" id="progress">
-    <div id="progressText">Loading speech model…</div>
+    <div id="progressText" aria-live="polite">Loading speech model…</div>
     <div class="track"><i id="progressBar"></i></div>
   </div>
 
@@ -90,7 +97,7 @@
     <div class="status" id="status">Starting…</div>
     <div class="queue" id="queue"></div>
     <div class="right">
-      <button class="sm" id="undoBtn" title="Undo last dictation (or say 'scratch that')">Undo</button>
+      <button class="sm" id="undoBtn" title="Undo last dictation (or say 'undo'); 'scratch that' deletes the last sentence">Undo</button>
       <button class="sm" id="clearBtn">Clear</button>
       <button class="sm primary" id="copyBtn" title="Copy the whole note (Ctrl+Shift+C)">Copy note</button>
     </div>
@@ -140,7 +147,8 @@
       <tr><td>period, comma, colon, semicolon, question mark</td><td>Punctuation</td></tr>
       <tr><td>new paragraph / new line</td><td>Paragraph or line break</td></tr>
       <tr><td>open paren / close paren, hyphen, slash</td><td>Symbols</td></tr>
-      <tr><td>scratch that</td><td>Removes the last thing you dictated</td></tr>
+      <tr><td>scratch that</td><td>Deletes the last sentence. Pause first: it only works when "scratch that" is said on its own, after a pause of about a second, not tacked onto the end of a sentence.</td></tr>
+      <tr><td>undo</td><td>Puts back the note as it was before the last segment was added (same as the Undo button)</td></tr>
       <tr><td>delete last word / delete last sentence</td><td>Edits at the cursor</td></tr>
       <tr><td>cap that / all caps that</td><td>Capitalizes the last dictation</td></tr>
       <tr><td>copy note</td><td>Copies everything to the clipboard</td></tr>

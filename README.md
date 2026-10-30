@@ -72,6 +72,7 @@ sha256sum -c SHA256SUMS.txt
 
 ## Version history
 
+* **v2.1 (2026-10-29 night)**: "scratch that" now deletes back to the previous sentence end (say it on its own after a pause); "undo" reverts the last segment. Phone layout: header and Help table fit the viewport, loading text no longer re-wraps; status no longer stuck on "Finishing transcription" after Stop. Decoder slimmed 79 → 53 MB (tied output projection; identical outputs).
 * **v2 (2026-10-29 evening)**: speech model fine-tuned on surgical dictation (on a held-out op note dictated by a
   surgeon: word error rate 20.6% → 11.7%, long medical words recognized 77% → 92%, before the vocabulary layer).
   Fixed a recorder bug that could stop hearing after 2 to 3 minutes of continuous dictation (noise-floor runaway).

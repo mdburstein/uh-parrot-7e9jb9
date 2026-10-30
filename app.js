@@ -95,7 +95,9 @@
     pushHistory();
     const el = ui.note; const pos = el.selectionStart;
     let before = el.value.slice(0, pos).replace(/\s*$/, '');
-    const idx = Math.max(before.lastIndexOf('. ', before.length - 2), before.lastIndexOf('\n'));
+    // Drop the trailing sentence: everything after the last sentence end (. ! ?) or line break that precedes it.
+    let idx = -1; const re = /[.!?](?=\s)|\n/g; let m;
+    while ((m = re.exec(before)) !== null) { if (m.index < before.length - 1) idx = m.index; }
     before = idx >= 0 ? before.slice(0, idx + 1) : '';
     el.value = before + el.value.slice(pos);
     el.setSelectionRange(before.length, before.length); updateCount();
@@ -213,7 +215,7 @@
     modelReady = false;
     ui.recBtn.disabled = true;
     ui.progress.classList.add('show');
-    ui.progressText.textContent = 'Loading speech model (' + modelName + ')… first load caches ~80–200 MB, later loads are instant';
+    ui.progressText.textContent = 'Loading speech model… the first load fetches about 80 MB; after that it opens in seconds';
     setStatus('Loading model…', 'loading');
     worker = window.PARROT_PRESTARTED_WORKER || new Worker('worker.js', { type: 'module' });
     worker.onmessage = (ev) => {
@@ -222,7 +224,14 @@
       if (m.type === 'progress') {
         const pct = Math.max(0, Math.min(100, Math.round(m.progress || 0)));
         ui.progressBar.style.width = pct + '%';
-        if (m.file) ui.progressText.textContent = 'Loading ' + m.file.split('/').pop() + ' — ' + pct + '%';
+        if (m.file) {
+          // Friendly, fixed-width label so the line never re-wraps on a phone while the percentage ticks.
+          const f = m.file.split('/').pop();
+          const part = /encoder/.test(f) ? 'part 2 of 3' : /decoder/.test(f) ? 'part 3 of 3' : /tokenizer|config|preprocessor/.test(f) ? 'part 1 of 3' : f;
+          ui.progressText.textContent = '';
+          ui.progressText.append('Loading speech model, ' + part + ' \u00b7 ');
+          const sp = document.createElement('span'); sp.className = 'pct'; sp.textContent = pct + '%'; ui.progressText.append(sp);
+        }
       } else if (m.type === 'ready') {
         modelReady = true;
         ui.progress.classList.remove('show');
@@ -230,11 +239,12 @@
         setStatus('Ready. Press Record or F2 and start dictating.', 'ready');
         ui.engineInfo.textContent = 'Engine: Whisper ' + m.model.replace('whisper-', '') + ' · ' + (m.threads > 1 ? m.threads + ' threads' : 'single thread') + ' · 100% offline';
       } else if (m.type === 'result') {
-        pending--; updateQueue();
+        pending = Math.max(0, pending - 1); updateQueue();
         const processed = handleTranscript(m.text, m.seconds, m.ms);
         if (pendingAudio.has(m.id)) { keepClip(pendingAudio.get(m.id), m.text, processed || ''); pendingAudio.delete(m.id); }
+        settleStatus();
       } else if (m.type === 'error') {
-        if (m.id !== undefined) { pending--; updateQueue(); }
+        if (m.id !== undefined) { pending = Math.max(0, pending - 1); updateQueue(); settleStatus(); }
         console.error(m.message);
         setStatus(m.message, 'error');
         if (!modelReady) ui.progressText.textContent = m.message;
@@ -279,6 +289,19 @@
   }
 
   function updateQueue() { ui.queue.textContent = pending > 0 ? ('Transcribing ' + pending + '…') : ''; }
+  // Refresh the status line once the queue drains (the last segment usually returns after Stop was pressed).
+  let settleTimer = null;
+  function settleStatus() {
+    clearTimeout(settleTimer);
+    if (!modelReady) return;
+    if (pending > 0) {
+      setStatus(recording ? 'Listening…' : 'Finishing transcription…', recording ? 'live' : 'ready');
+      // Watchdog: a segment whose reply never arrives must not leave the UI stuck.
+      settleTimer = setTimeout(() => { if (pending > 0) { console.warn('pending reset after timeout'); pending = 0; updateQueue(); settleStatus(); } }, 45000);
+    } else {
+      setStatus(recording ? 'Listening…' : 'Stopped. Press Record or F2 to continue.', recording ? 'live' : 'ready');
+    }
+  }
 
   function handleTranscript(raw, seconds, ms) {
     // Whisper sometimes hallucinates on near-silence; drop the usual suspects.
@@ -367,7 +390,7 @@
     for (const c of segment) { buf.set(c, o); o += c.length; }
     segment = []; segLen = 0; inSpeech = false; silenceFrames = 0;
     if (buf.length < MIN_SEG * SAMPLE_RATE) return;
-    pending++; updateQueue();
+    pending++; updateQueue(); settleStatus();
     const id = ++seq;
     if (prefs.keepAudio) pendingAudio.set(id, buf.slice());
     worker.postMessage({ type: 'transcribe', id, audio: buf }, [buf.buffer]);
@@ -410,7 +433,7 @@
     processor = sourceNode = mediaStream = audioCtx = null;
     ui.level.style.width = '0%';
     ui.recBtn.classList.remove('recording'); ui.recBtn.querySelector('.label').textContent = 'Record';
-    setStatus(pending ? 'Finishing transcription…' : 'Stopped. Press Record or F2 to continue.', 'ready');
+    settleStatus();
     document.title = 'UH Parrot';
     if (prefs.autoCopy && ui.note.value.trim()) {
       const wait = () => { if (pending) return setTimeout(wait, 200); copyNote(); };
@@ -439,6 +462,7 @@
   window.ParrotTest = {
     feed(f32) { pending++; updateQueue(); worker.postMessage({ type: 'transcribe', id: ++seq, audio: f32 }); },
     ready: () => modelReady,
+    text(raw) { return handleTranscript(raw, 1, 0); }, // feed engine text through commands/vocabulary into the note
     setPrompt(p) { worker.postMessage({ type: 'prompt', prompt: p }); },
     transcribe(f32) {
       return new Promise((resolve) => {

@@ -242,7 +242,9 @@
 
     // Editing commands (consume the whole utterance if it is only a command)
     const only = t.trim().replace(/[.,!?]+$/, '').toLowerCase();
-    if (/^(scratch that|delete that|undo that|undo|strike that|erase that|take that back)$/.test(only)) return { text: '', actions: ['undo'] };
+    // Dragon-style: "scratch that" removes back to the end of the previous sentence. "undo" reverts the last insertion.
+    if (/^(scratch that|delete that|strike that|erase that|take that back|scratch)$/.test(only)) return { text: '', actions: ['deleteSentence'] };
+    if (/^(undo that|undo)$/.test(only)) return { text: '', actions: ['undo'] };
     if (/^(delete (?:last|previous) word|scratch (?:last|previous) word)$/.test(only)) return { text: '', actions: ['deleteWord'] };
     if (/^(delete (?:last|previous) sentence|scratch (?:last|previous) sentence)$/.test(only)) return { text: '', actions: ['deleteSentence'] };
     if (/^(select all|clear (?:all|everything|the )?(?:note|text)?|clear)$/.test(only)) return { text: '', actions: ['clear'] };

@@ -1,4 +1,4 @@
-UH Parrot network audit — 2026-10-29T23:51:47.221Z
+UH Parrot network audit — 2026-10-30T01:55:27.670Z
 Scenario: page load, model load, one transcription, then deliberate attempts to reach example.com
 
 Requests made (28):
@@ -17,8 +17,8 @@ Requests made (28):
   <site>/phonetic.js
   <site>/textengine.js
   <site>/app.js
-  <site>/model/whisper-small.en/config.json
   <site>/worker.js
+  <site>/model/whisper-small.en/config.json
   <site>/lib/transformers.min.js
   <site>/engine.js
   <site>/model/whisper-base.en/preprocessor_config.json
