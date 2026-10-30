@@ -204,7 +204,7 @@
   // ---------- Settings / help panels ----------
   ui.settingsBtn.onclick = () => { ui.settings.classList.toggle('open'); ui.help.classList.remove('open'); };
   ui.helpBtn.onclick = () => { ui.help.classList.toggle('open'); ui.settings.classList.remove('open'); };
-  ui.fuzzyChk.checked = !!prefs.fuzzy; ui.fuzzyChk.onchange = () => { prefs.fuzzy = ui.fuzzyChk.checked; savePrefs(); };
+  if (ui.fuzzyChk) { ui.fuzzyChk.checked = !!prefs.fuzzy; ui.fuzzyChk.onchange = () => { prefs.fuzzy = ui.fuzzyChk.checked; savePrefs(); }; } else { prefs.fuzzy = false; } // option retired in v2.1
   ui.autoCopyChk.checked = !!prefs.autoCopy; ui.autoCopyChk.onchange = () => { prefs.autoCopy = ui.autoCopyChk.checked; savePrefs(); };
 
   // ---------- Model / worker ----------

@@ -125,7 +125,6 @@
       <label>Microphone <select id="micSel"></select></label>
     </div>
     <div class="row">
-      <label><input type="checkbox" id="fuzzyChk"> Extra-aggressive spelling correction (phonetic matching is always on; this adds one-letter typo snapping)</label>
       <label><input type="checkbox" id="autoCopyChk"> Copy note to clipboard automatically when I stop recording</label>
     </div>
     <div class="row">
@@ -135,7 +134,7 @@
       <small>Dictate with this on, then download the zip and send it to Matthew. The count is <b>segments, not dictations</b>: the recorder cuts your speech at every pause of about a second (or at 25 seconds) and transcribes each piece as you go, so one note is usually 5 to 10 segments. The zip contains the audio of each segment and what the engine wrote for it. Do not include patient names or identifiers.</small>
     </div>
     <h2 style="margin-top:14px">My vocabulary</h2>
-    <small>One per line. Format: <code>what Whisper hears = What it should write</code>, for example <code>parma partners = Parma partners</code>.</small>
+    <small>One term per line, written as what the engine hears, an equals sign, then what it should write. Example: <em>ligature = LigaSure</em></small>
     <textarea id="vocabBox" placeholder="misheard phrase = Correct Term"></textarea>
     <div class="row" style="margin-top:8px"><button class="sm primary" id="saveVocabBtn">Save vocabulary</button> <button class="sm" id="exportVocabBtn">Export to file</button> <button class="sm" id="importVocabBtn">Import from file</button><input type="file" id="importVocabFile" accept=".txt" style="display:none"></div>
     <small><strong>Where this is saved:</strong> in this browser on this computer only. It survives closing the tab, but it does not follow you to another workstation and shared PCs may clear it at logoff. Terms you add here are also whispered to the speech engine before each sentence, so it learns to hear them. Export a copy to keep it, and email new terms to <a href="mailto:Matthew.Burstein@uhhospitals.org?subject=UH%20Parrot%20vocabulary">Matthew.Burstein@uhhospitals.org</a> so they go into the shared dictionary for everyone. No patient data belongs here.</small>
