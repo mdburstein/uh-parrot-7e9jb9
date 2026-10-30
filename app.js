@@ -24,12 +24,17 @@
   const lastInsert = { start: 0, end: 0 };
   let userStopped = false;
 
-  const prefs = JSON.parse(localStorage.getItem('parrot.prefs') || '{}');
-  function savePrefs() { localStorage.setItem('parrot.prefs', JSON.stringify(prefs)); }
+  // Storage can throw (sandboxed preview frames, private mode, locked-down kiosks): never let that stop the app.
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+  };
+  let prefs = {}; try { prefs = JSON.parse(store.get('parrot.prefs') || '{}') || {}; } catch (e) { prefs = {}; }
+  function savePrefs() { store.set('parrot.prefs', JSON.stringify(prefs)); }
 
   // ---------- Vocabulary ----------
   TextEngine.loadBuiltin();
-  const customVocab = localStorage.getItem('parrot.vocab') || '';
+  const customVocab = store.get('parrot.vocab') || '';
   ui.vocabBox.value = customVocab;
   TextEngine.loadCustom(customVocab);
   TextEngine.compile();
@@ -51,7 +56,7 @@
     r.readAsText(f); e.target.value = '';
   };
   ui.saveVocabBtn.onclick = () => {
-    localStorage.setItem('parrot.vocab', ui.vocabBox.value);
+    store.set('parrot.vocab', ui.vocabBox.value);
     TextEngine.loadCustom(ui.vocabBox.value);
     TextEngine.compile();
     refreshVocabCount();
@@ -114,11 +119,11 @@
   function updateCount() {
     const w = ui.note.value.trim() ? ui.note.value.trim().split(/\s+/).length : 0;
     ui.wordCount.textContent = w + ' words';
-    localStorage.setItem('parrot.draft', ui.note.value);
+    store.set('parrot.draft', ui.note.value);
   }
   ui.note.addEventListener('input', updateCount);
   // Restore draft from this browser session (survives an accidental refresh)
-  if (localStorage.getItem('parrot.draft')) { ui.note.value = localStorage.getItem('parrot.draft'); updateCount(); }
+  if (store.get('parrot.draft')) { ui.note.value = store.get('parrot.draft'); updateCount(); }
 
   async function copyNote() {
     const text = ui.note.value;
