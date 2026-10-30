@@ -17,7 +17,7 @@ from this site.
 | `worker.js`, `engine.js` | Web Worker that runs the speech model off the UI thread | 5 KB |
 | `lib/transformers.min.js` | Transformers.js v3 (Hugging Face), Apache-2.0 | 0.6 MB |
 | `lib/ort-wasm-simd-threaded.asyncify.{mjs,wasm}` | ONNX Runtime Web (Microsoft), MIT | 27 MB |
-| `model/whisper-base.en/` | OpenAI Whisper base.en (MIT), fine-tuned by UH on about 8,000 surgical dictation clips (real op-note sentences in 20 synthetic voices plus about 25 minutes of surgeon dictation), int8 ONNX. Same architecture and runtime as v1. | 105 MB |
+| `model/whisper-base.en/` | OpenAI Whisper base.en (MIT), fine-tuned by UH on about 8,000 surgical dictation clips (real op-note sentences in 20 synthetic voices plus about 25 minutes of surgeon dictation), int8 ONNX. Same architecture and runtime as v1. | 79 MB |
 | `SHA256SUMS.txt` | Checksums of every file | |
 | `NETWORK-AUDIT.txt` | Log of every network request made during a full load-and-transcribe run in headless Chrome | |
 
@@ -31,7 +31,7 @@ from this site.
 3. MIME types: `.wasm` → `application/wasm`, `.onnx` → `application/octet-stream`, `.mjs` and `.js` →
    `text/javascript`, `.json` → `application/json`. IIS needs `.wasm`, `.onnx`, and `.mjs` added under MIME Types.
 4. Cache headers for `lib/` and `model/`: `Cache-Control: public, max-age=31536000, immutable`. First load pulls
-   ~135 MB over the intranet; afterwards the browser cache makes loads instant.
+   ~108 MB over the intranet; afterwards the browser cache makes loads instant.
 5. Optional, for speed: response headers `Cross-Origin-Opener-Policy: same-origin` and
    `Cross-Origin-Embedder-Policy: require-corp` let the engine use up to 4 CPU threads. Without them it runs
    single-threaded, which still works.
